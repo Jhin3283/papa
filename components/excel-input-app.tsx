@@ -1,8 +1,10 @@
 "use client";
 
 import React, { useState } from "react";
-import * as XLSX from "xlsx";
+// import * as XLSX from "xlsx";
 // import XLSX from "xlsx-style"
+import ExcelJS from "exceljs";
+import { saveAs } from "file-saver";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,101 +66,142 @@ export function ExcelInputAppComponent() {
     setItems(newItems);
   };
 
+  // const exportToExcel = async () => {
+  //   // 샘플 xlsx 파일 읽기
+  //   const response = await fetch("/template.xlsx");
+  //   const arrayBuffer = await response.arrayBuffer();
+  //   const data = new Uint8Array(arrayBuffer);
+  //   const workbook = XLSX.read(data, {
+  //     type: "array",
+  //     cellStyles: true,
+  //     cellNF: true,
+  //     xlfn: true,
+  //   });
+
+  //   // 첫 번째 시트 선택
+  //   const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+  //   items.forEach((item, index) => {
+  //     const rowIndex = index + 5; // A5부터 시작
+  //     worksheet[`A${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.순번,
+  //       s: worksheet[`A${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`B${rowIndex}`] = {
+  //       t: "s",
+  //       v: item.매입처,
+  //       s: worksheet[`B${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`C${rowIndex}`] = {
+  //       t: "s",
+  //       v: item.품목,
+  //       s: worksheet[`C${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`D${rowIndex}`] = {
+  //       t: "s",
+  //       v: item.규격,
+  //       s: worksheet[`D${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`E${rowIndex}`] = {
+  //       t: "s",
+  //       v: item.원산지,
+  //       s: worksheet[`E${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`F${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.수량,
+  //       s: worksheet[`F${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`G${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.매입단가,
+  //       s: worksheet[`G${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`G${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.수량 * item.매입단가,
+  //       s: worksheet[`H${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`I${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.매출단가,
+  //       s: worksheet[`H${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`J${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.수량 * item.매출단가,
+  //       s: worksheet[`H${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`K${rowIndex}`] = {
+  //       t: "n",
+  //       v: item.매출단가 - item.매입단가,
+  //       s: worksheet[`H${rowIndex}`]?.s,
+  //     };
+  //     worksheet[`L${rowIndex}`] = {
+  //       t: "n",
+  //       v: (item.매출단가 - item.매입단가) * item.수량,
+  //       s: worksheet[`H${rowIndex}`]?.s,
+  //     };
+  //   });
+
+  //   // C2 셀 스타일 설정
+  //   worksheet["C2"] = worksheet["C2"] || {};
+  //   worksheet["C2"].s = {
+  //     alignment: { horizontal: "center" },
+  //     font: { underline: true, sz: 18 }, // sz: 폰트 크기 설정
+  //   };
+
+  //   // 엑셀 파일 저장
+  //   const dateStr = new Date().toISOString().slice(0, 10); // yyyy-MM-dd 형식
+  //   XLSX.writeFile(workbook, `${dateStr} 매입 매출 명세서.xlsx`);
+  // };
+
   const exportToExcel = async () => {
+    const workbook = new ExcelJS.Workbook();
+
     // 샘플 xlsx 파일 읽기
     const response = await fetch("/template.xlsx");
     const arrayBuffer = await response.arrayBuffer();
-    const data = new Uint8Array(arrayBuffer);
-    const workbook = XLSX.read(data, { type: "array", cellStyles: true });
+    await workbook.xlsx.load(arrayBuffer);
+    console.log(
+      "Available worksheets:",
+      workbook.worksheets.map((ws) => ws.name)
+    );
 
     // 첫 번째 시트 선택
-    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+    const worksheet = workbook.getWorksheet("주인수산");
+    console.log(worksheet);
 
-    const styles = {} as any;
-    for (let rowIndex = 5; rowIndex < 5 + items.length; rowIndex++) {
-      for (let colIndex = 0; colIndex < 11; colIndex++) {
-        const cellAddress = XLSX.utils.encode_cell({
-          r: rowIndex,
-          c: colIndex,
-        });
-        if (worksheet[cellAddress]) {
-          styles[cellAddress] = worksheet[cellAddress].s;
-        }
-      }
+    if (!worksheet) {
+      console.error("Worksheet not found");
+      return;
     }
+
+    // 데이터 추가
     items.forEach((item, index) => {
       const rowIndex = index + 5; // A5부터 시작
-      worksheet[`A${rowIndex}`] = {
-        t: "n",
-        v: item.순번,
-        s: worksheet[`A${rowIndex}`]?.s,
-      };
-      worksheet[`B${rowIndex}`] = {
-        t: "s",
-        v: item.매입처,
-        s: worksheet[`B${rowIndex}`]?.s,
-      };
-      worksheet[`C${rowIndex}`] = {
-        t: "s",
-        v: item.품목,
-        s: worksheet[`C${rowIndex}`]?.s,
-      };
-      worksheet[`D${rowIndex}`] = {
-        t: "s",
-        v: item.규격,
-        s: worksheet[`D${rowIndex}`]?.s,
-      };
-      worksheet[`E${rowIndex}`] = {
-        t: "s",
-        v: item.원산지,
-        s: worksheet[`E${rowIndex}`]?.s,
-      };
-      worksheet[`F${rowIndex}`] = {
-        t: "n",
-        v: item.수량,
-        s: worksheet[`F${rowIndex}`]?.s,
-      };
-      worksheet[`G${rowIndex}`] = {
-        t: "n",
-        v: item.매입단가,
-        s: worksheet[`G${rowIndex}`]?.s,
-      };
-      worksheet[`G${rowIndex}`] = {
-        t: "n",
-        v: item.수량 * item.매입단가,
-        s: worksheet[`H${rowIndex}`]?.s,
-      };
-      worksheet[`I${rowIndex}`] = {
-        t: "n",
-        v: item.매출단가,
-        s: worksheet[`H${rowIndex}`]?.s,
-      };
-      worksheet[`J${rowIndex}`] = {
-        t: "n",
-        v: item.수량 * item.매출단가,
-        s: worksheet[`H${rowIndex}`]?.s,
-      };
-      worksheet[`K${rowIndex}`] = {
-        t: "n",
-        v: item.매출단가 - item.매입단가,
-        s: worksheet[`H${rowIndex}`]?.s,
-      };
-      worksheet[`L${rowIndex}`] = {
-        t: "n",
-        v: (item.매출단가 - item.매입단가) * item.수량,
-        s: worksheet[`H${rowIndex}`]?.s,
-      };
-    });
-
-    Object.keys(styles).forEach((cellAddress) => {
-      if (worksheet[cellAddress]) {
-        worksheet[cellAddress].s = styles[cellAddress];
-      }
+      worksheet.getCell(`B${rowIndex}`).value = item.매입처;
+      worksheet.getCell(`C${rowIndex}`).value = item.품목;
+      worksheet.getCell(`D${rowIndex}`).value = item.규격;
+      worksheet.getCell(`E${rowIndex}`).value = item.원산지;
+      worksheet.getCell(`F${rowIndex}`).value = item.수량;
+      worksheet.getCell(`G${rowIndex}`).value = item.매입단가;
+      worksheet.getCell(`H${rowIndex}`).value = item.수량 * item.매입단가;
+      worksheet.getCell(`I${rowIndex}`).value = item.매출단가;
+      worksheet.getCell(`J${rowIndex}`).value = item.수량 * item.매출단가;
+      worksheet.getCell(`K${rowIndex}`).value = item.매출단가 - item.매입단가;
+      worksheet.getCell(`L${rowIndex}`).value =
+        (item.매출단가 - item.매입단가) * item.수량;
     });
 
     // 엑셀 파일 저장
-    const dateStr = new Date().toISOString().slice(0, 10); // yyyy-MM-dd 형식
-    XLSX.writeFile(workbook, `${dateStr} 매입 매출 명세서.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: "application/octet-stream" });
+    saveAs(
+      blob,
+      `${new Date().toISOString().slice(0, 10)} 매입 매출 명세서.xlsx`
+    );
   };
   return (
     <div className="p-4 max-w-md mx-auto">
