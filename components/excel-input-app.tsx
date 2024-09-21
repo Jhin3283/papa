@@ -72,32 +72,73 @@ export function ExcelInputAppComponent() {
     // 첫 번째 시트 선택
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
-    // 데이터 추가
     items.forEach((item, index) => {
-      const row = [
-        item.순번,
-        item.매입처,
-        item.품목,
-        item.규격,
-        item.원산지,
-        item.수량,
-        item.매입단가,
-        item.수량 * item.매입단가,
-        item.매출단가,
-        item.수량 * item.매출단가,
-        item.매출단가 - item.매입단가,
-        (item.매출단가 - item.매입단가) * item.수량,
-      ];
-      XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: `A${index + 5}` }); // A5부터 시작
+      const rowIndex = index + 5; // A5부터 시작
+      worksheet[`A${rowIndex}`] = {
+        t: "n",
+        v: item.순번,
+        s: worksheet[`A${rowIndex}`]?.s,
+      };
+      worksheet[`B${rowIndex}`] = {
+        t: "s",
+        v: item.매입처,
+        s: worksheet[`B${rowIndex}`]?.s,
+      };
+      worksheet[`C${rowIndex}`] = {
+        t: "s",
+        v: item.품목,
+        s: worksheet[`C${rowIndex}`]?.s,
+      };
+      worksheet[`D${rowIndex}`] = {
+        t: "s",
+        v: item.규격,
+        s: worksheet[`D${rowIndex}`]?.s,
+      };
+      worksheet[`E${rowIndex}`] = {
+        t: "s",
+        v: item.원산지,
+        s: worksheet[`E${rowIndex}`]?.s,
+      };
+      worksheet[`F${rowIndex}`] = {
+        t: "n",
+        v: item.수량,
+        s: worksheet[`F${rowIndex}`]?.s,
+      };
+      worksheet[`G${rowIndex}`] = {
+        t: "n",
+        v: item.매입단가,
+        s: worksheet[`G${rowIndex}`]?.s,
+      };
+      worksheet[`G${rowIndex}`] = {
+        t: "n",
+        v: item.수량 * item.매입단가,
+        s: worksheet[`H${rowIndex}`]?.s,
+      };
+      worksheet[`I${rowIndex}`] = {
+        t: "n",
+        v: item.매출단가,
+        s: worksheet[`H${rowIndex}`]?.s,
+      };
+      worksheet[`J${rowIndex}`] = {
+        t: "n",
+        v: item.수량 * item.매출단가,
+        s: worksheet[`H${rowIndex}`]?.s,
+      };
+      worksheet[`K${rowIndex}`] = {
+        t: "n",
+        v: item.매출단가 - item.매입단가,
+        s: worksheet[`H${rowIndex}`]?.s,
+      };
+      worksheet[`L${rowIndex}`] = {
+        t: "n",
+        v: (item.매출단가 - item.매입단가) * item.수량,
+        s: worksheet[`H${rowIndex}`]?.s,
+      };
     });
 
     // 엑셀 파일 저장
-    const newWorkbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(newWorkbook, worksheet);
-    XLSX.writeFile(
-      newWorkbook,
-      `${new Date().toISOString()} 매입 매출 명세서.xlsx`
-    );
+    const dateStr = new Date().toISOString().slice(0, 10); // yyyy-MM-dd 형식
+    XLSX.writeFile(workbook, `${dateStr} 매입 매출 명세서.xlsx`);
   };
   return (
     <div className="p-4 max-w-md mx-auto">
