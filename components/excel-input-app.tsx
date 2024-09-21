@@ -82,15 +82,22 @@ export function ExcelInputAppComponent() {
         item.원산지,
         item.수량,
         item.매입단가,
+        item.수량 * item.매입단가,
         item.매출단가,
+        item.수량 * item.매출단가,
+        item.매출단가 - item.매입단가,
+        (item.매출단가 - item.매입단가) * item.수량,
       ];
       XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: `A${index + 5}` }); // A5부터 시작
     });
 
     // 엑셀 파일 저장
     const newWorkbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(newWorkbook, worksheet, "Items");
-    XLSX.writeFile(newWorkbook, "items.xlsx");
+    XLSX.utils.book_append_sheet(newWorkbook, worksheet);
+    XLSX.writeFile(
+      newWorkbook,
+      `${new Date().toISOString()} 매입 매출 명세서.xlsx`
+    );
   };
   return (
     <div className="p-4 max-w-md mx-auto">
