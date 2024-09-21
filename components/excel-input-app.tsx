@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import * as XLSX from "xlsx"; // xlsx-style 라이브러리 임포트
+import * as XLSX from "xlsx";
+// import XLSX from "xlsx-style"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,11 +68,24 @@ export function ExcelInputAppComponent() {
     // 샘플 xlsx 파일 읽기
     const response = await fetch("/template.xlsx");
     const arrayBuffer = await response.arrayBuffer();
-    const workbook = XLSX.read(arrayBuffer, { type: "array" });
+    const data = new Uint8Array(arrayBuffer);
+    const workbook = XLSX.read(data, { type: "array", cellStyles: true });
 
     // 첫 번째 시트 선택
     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
 
+    const styles = {} as any;
+    for (let rowIndex = 5; rowIndex < 5 + items.length; rowIndex++) {
+      for (let colIndex = 0; colIndex < 11; colIndex++) {
+        const cellAddress = XLSX.utils.encode_cell({
+          r: rowIndex,
+          c: colIndex,
+        });
+        if (worksheet[cellAddress]) {
+          styles[cellAddress] = worksheet[cellAddress].s;
+        }
+      }
+    }
     items.forEach((item, index) => {
       const rowIndex = index + 5; // A5부터 시작
       worksheet[`A${rowIndex}`] = {
@@ -134,6 +148,12 @@ export function ExcelInputAppComponent() {
         v: (item.매출단가 - item.매입단가) * item.수량,
         s: worksheet[`H${rowIndex}`]?.s,
       };
+    });
+
+    Object.keys(styles).forEach((cellAddress) => {
+      if (worksheet[cellAddress]) {
+        worksheet[cellAddress].s = styles[cellAddress];
+      }
     });
 
     // 엑셀 파일 저장
